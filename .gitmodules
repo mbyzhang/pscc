@@ -1,0 +1,6 @@
+[submodule "psplay"]
+	path = psplay
+	url = https://github.com/mbyzhang/psplay
+[submodule "psrecv"]
+	path = psrecv
+	url = https://github.com/mbyzhang/psrecv
