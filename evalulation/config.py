@@ -27,3 +27,6 @@ EXPERIMENT_RUNS_SKELETON = \
         ],
         tx_payload=[EXPERIMENT_TX_PAYLOAD],
     )
+
+PSPLAY_PROGRAM = "../psplay/build/PSPlay"
+MANIFEST_FILENAME = "manifest.json"

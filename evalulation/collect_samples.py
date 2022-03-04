@@ -1,7 +1,7 @@
 from typing import List
 from tqdm import tqdm
 from common import ExperimentManifest, ExperimentParams, ExperimentRun
-from config import EXPERIMENT_RUNS_SKELETON
+from config import EXPERIMENT_RUNS_SKELETON, MANIFEST_FILENAME, PSPLAY_PROGRAM
 
 import argparse
 import os
@@ -18,8 +18,8 @@ from utils import setattrs
 def get_platform_string():
     return platform.node() + ": " + platform.platform()
 
-def execute_psplay(run: ExperimentRun, program: str = "../psplay/build/PSPlay", stdout = None, stderr = None):
-    args = [program]
+def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
+    args = [PSPLAY_PROGRAM]
 
     # bitrate
     args += ["-b", str(run.tx_baudrate)]
@@ -85,7 +85,6 @@ if __name__ == "__main__":
 
     manifest = ExperimentManifest(params=ExperimentParams(experiment_run_cooldown_duration_s=0))
 
-    MANIFEST_FILENAME = "manifest.json"
     filename = os.path.join(args.name, MANIFEST_FILENAME)
 
     runs_new = EXPERIMENT_RUNS_SKELETON * args.repeat
