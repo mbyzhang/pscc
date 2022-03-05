@@ -2,7 +2,7 @@ import base64
 
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
-from typing import List
+from typing import List, Optional
 
 @dataclass_json
 @dataclass
@@ -16,6 +16,10 @@ class ExperimentRun:
         encoder=lambda o: base64.b64encode(o).decode(),
         decoder=base64.b64decode
     )) # ignored if mode=chirp/audiofile/alternating
+    rx_payload: Optional[bytes] = field(default_factory=bytes, metadata=config(
+        encoder=lambda o: o and base64.b64encode(o).decode(),
+        decoder=lambda o: o and base64.b64decode(o)
+    ))
     distance_m: float = 0.0
     uuid: str = ""
 
