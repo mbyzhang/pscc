@@ -32,6 +32,8 @@ def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
         args += ["-m", run.tx_payload]
         if run.tx_mode == "raw":
             args += ["-r"]
+    elif run.tx_mode == "chirp":
+        args += ["-c"]
     else:
         # TODO: other modes
         raise ValueError("Unsupported Tx mode: " + run.tx_mode)
