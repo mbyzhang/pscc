@@ -4,8 +4,8 @@ import argparse
 from typing import List
 
 from tqdm import tqdm
-from common import ExperimentManifest, ExperimentRun
-from config import MANIFEST_FILENAME
+from common import ExperimentManifest, ExperimentRun, get_base_filename
+from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, MANIFEST_FILENAME
 
 sys.path.insert(0, "../psrecv")
 
@@ -19,7 +19,7 @@ def demodulate(run: ExperimentRun, base_dir: str = ".", block_size: int = 4096):
     assert run.tx_modulation == "fsk"
     assert len(run.tx_modulation_freqs) == 2
 
-    filename = os.path.join(base_dir, run.uuid + ".wav")
+    filename = os.path.join(base_dir, get_base_filename(EXPERIMENT_RUN_BASE_FILENAME_FORMAT, run) + ".wav")
     source = SoundFileSource(filename, block_size=block_size)
 
     frames = []

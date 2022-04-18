@@ -1,4 +1,5 @@
 import base64
+import dataclasses
 
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
@@ -37,3 +38,11 @@ class ExperimentParams:
 class ExperimentManifest:
     runs: List[ExperimentRun] = field(default_factory=list)
     params: ExperimentParams = field(default_factory=ExperimentParams)
+
+def get_base_filename(format: str, run: ExperimentRun):
+    return format.format(
+        **{
+            **dataclasses.asdict(run),
+            "tx_modulation_freqs": "_".join(map(str, run.tx_modulation_freqs))
+        }
+    )

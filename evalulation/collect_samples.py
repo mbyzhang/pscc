@@ -1,7 +1,7 @@
 from typing import List
 from tqdm import tqdm
-from common import ExperimentManifest, ExperimentParams, ExperimentRun
-from config import EXPERIMENT_RUNS_SKELETON, MANIFEST_FILENAME, PSPLAY_PROGRAM
+from common import ExperimentManifest, ExperimentParams, ExperimentRun, get_base_filename
+from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, EXPERIMENT_RUNS_SKELETON, MANIFEST_FILENAME, PSPLAY_PROGRAM
 
 import argparse
 import os
@@ -45,7 +45,10 @@ def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
 
 def collect(runs: List[ExperimentRun], params: ExperimentParams):
     for run in tqdm(runs):
-        recording_filename = os.path.join(params.name, run.uuid + ".wav")
+        base_name = get_base_filename(EXPERIMENT_RUN_BASE_FILENAME_FORMAT, run)
+        os.makedirs(os.path.dirname(os.path.join(params.name, base_name)), exist_ok=True)
+
+        recording_filename = os.path.join(params.name, base_name + ".wav")
         if os.path.isfile(recording_filename):
             print("Skipping existing run " + run.uuid)
             continue
@@ -57,8 +60,8 @@ def collect(runs: List[ExperimentRun], params: ExperimentParams):
         )
 
         time.sleep(params.recording_warmup_duration_s)
-        with open(os.path.join(params.name, run.uuid + ".stdout"), "wb") as stdout:
-            with open(os.path.join(params.name, run.uuid + ".stderr"), "wb") as stderr:
+        with open(os.path.join(params.name, base_name + ".stdout"), "wb") as stdout:
+            with open(os.path.join(params.name, base_name + ".stderr"), "wb") as stderr:
                 execute_psplay(run, stdout=stdout, stderr=stderr)
 
         time.sleep(params.recording_cooldown_duration_s)
