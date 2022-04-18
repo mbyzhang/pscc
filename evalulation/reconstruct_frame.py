@@ -56,7 +56,7 @@ def demodulate(run: ExperimentRun, base_dir: str = ".", block_size: int = 4096):
         )
 
         for block in source.stream:
-            block_frames = pipeline.accept(block)
+            block_frames = pipeline(block)
             frames += block_frames
 
     return frames
