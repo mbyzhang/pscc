@@ -7,6 +7,7 @@ import argparse
 import os
 import time
 import uuid
+import copy
 import platform
 import subprocess
 import sounddevice
@@ -19,7 +20,7 @@ def get_platform_string():
     return platform.node() + ": " + platform.platform()
 
 def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
-    args = [PSPLAY_PROGRAM]
+    args = copy.deepcopy(PSPLAY_PROGRAM)
 
     # bitrate
     args += ["-b", str(run.tx_baudrate)]
