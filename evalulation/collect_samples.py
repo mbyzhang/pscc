@@ -12,6 +12,8 @@ import platform
 import subprocess
 import sounddevice
 import soundfile
+import random
+import itertools
 import numpy as np
 
 from utils import setattrs
@@ -30,7 +32,8 @@ def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
 
     # mode and payload
     if run.tx_mode in {"message", "raw"}:
-        args += ["-m", run.tx_payload]
+        # args += ["-m", run.tx_payload]
+        args += ["-s"]
         if run.tx_mode == "raw":
             args += ["-r"]
     elif run.tx_mode == "chirp":
@@ -46,7 +49,8 @@ def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
     else:
         raise ValueError("Unsupported Tx modulation: " + run.tx_modulation)
 
-    subprocess.run(args, check=True, stdout=stdout, stderr=stderr)
+    subprocess.run(args, check=True, input=run.tx_payload, stdout=stdout, stderr=stderr)
+
 
 def collect(runs: List[ExperimentRun], params: ExperimentParams):
     for run in tqdm(runs):
@@ -98,10 +102,16 @@ if __name__ == "__main__":
 
     filename = os.path.join(args.name, MANIFEST_FILENAME)
 
-    runs_new = EXPERIMENT_RUNS_SKELETON * args.repeat
+    runs_new = [copy.deepcopy(EXPERIMENT_RUNS_SKELETON) for _ in range(args.repeat)]
+    runs_new: List[ExperimentRun] = list(itertools.chain(*runs_new))
     setattrs(runs_new, "distance_m", args.distance)
     setattrs(runs_new, "tx_platform", args.platform or get_platform_string())
     setattrs(runs_new, "uuid", lambda: str(uuid.uuid4()))
+
+    # Generate random payload
+    for run in runs_new:
+        if isinstance(run.tx_payload, int):
+            run.tx_payload = random.randbytes(run.tx_payload)
 
     if not args.resume and not args.extend:
         # create a new experiment
