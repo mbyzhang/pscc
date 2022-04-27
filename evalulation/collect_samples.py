@@ -38,9 +38,14 @@ def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
     else:
         # TODO: other modes
         raise ValueError("Unsupported Tx mode: " + run.tx_mode)
-    
-    # TODO: modulation
-    
+
+    if run.tx_modulation == "fsk":
+        pass
+    elif run.tx_modulation == "dbpsk":
+        args += ["-p"]
+    else:
+        raise ValueError("Unsupported Tx modulation: " + run.tx_modulation)
+
     subprocess.run(args, check=True, stdout=stdout, stderr=stderr)
 
 def collect(runs: List[ExperimentRun], params: ExperimentParams):
