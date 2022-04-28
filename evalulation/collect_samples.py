@@ -65,7 +65,8 @@ def collect(runs: List[ExperimentRun], params: ExperimentParams):
         recording = np.zeros((params.recording_fs * 300, 1))
         
         sounddevice.rec(
-            out=recording
+            out=recording,
+            samplerate=params.recording_fs,
         )
 
         time.sleep(params.recording_warmup_duration_s)
