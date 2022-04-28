@@ -25,6 +25,7 @@ class ExperimentRun:
         decoder=lambda o: o and base64.b64decode(o)
     ))
     distance_m: float = 0.0
+    base_filename: str = ""
     uuid: str = ""
 
     def summary(self) -> str:

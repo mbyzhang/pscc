@@ -7,7 +7,6 @@ from typing import List
 
 from tqdm import tqdm
 from common import ExperimentManifest, ExperimentRun, get_base_filename
-from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT
 
 sys.path.insert(0, "../psrecv")
 
@@ -42,7 +41,7 @@ def get_pipeline(run: ExperimentRun, fs: int):
     return pipeline
 
 def get_source(run: ExperimentRun, base_dir: str, block_size: int = 4096):
-    filename = os.path.join(base_dir, get_base_filename(EXPERIMENT_RUN_BASE_FILENAME_FORMAT, run) + ".wav")
+    filename = os.path.join(base_dir, run.base_filename + ".wav")
     source = SoundFileSource(filename, block_size=block_size)
     return source
 

@@ -1,7 +1,6 @@
 from typing import List
 from tqdm import tqdm
 from common import ExperimentManifest, ExperimentParams, ExperimentRun, get_base_filename
-from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, EXPERIMENT_RUNS_SKELETON, PSPLAY_PROGRAM
 
 import argparse
 import os
@@ -13,6 +12,7 @@ import subprocess
 import sounddevice
 import soundfile
 import itertools
+import importlib
 import numpy as np
 
 from utils import setattrs
@@ -20,8 +20,8 @@ from utils import setattrs
 def get_platform_string():
     return platform.node() + ": " + platform.platform()
 
-def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
-    args = copy.deepcopy(PSPLAY_PROGRAM)
+def execute_psplay(run: ExperimentRun, program: List[str] = ["../psplay/build/PSPlay"], stdout = None, stderr = None):
+    args = copy.deepcopy(program)
 
     # bitrate
     args += ["-b", str(run.tx_baudrate)]
@@ -51,12 +51,11 @@ def execute_psplay(run: ExperimentRun, stdout = None, stderr = None):
     subprocess.run(args, check=True, input=run.tx_payload, stdout=stdout, stderr=stderr)
 
 
-def collect(runs: List[ExperimentRun], params: ExperimentParams):
+def collect(runs: List[ExperimentRun], params: ExperimentParams, psplay_program: List[str] = ["../psplay/build/PSPlay"]):
     for run in tqdm(runs):
-        base_name = get_base_filename(EXPERIMENT_RUN_BASE_FILENAME_FORMAT, run)
-        os.makedirs(os.path.dirname(os.path.join(params.name, base_name)), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.join(params.name, run.base_filename)), exist_ok=True)
 
-        recording_filename = os.path.join(params.name, base_name + ".wav")
+        recording_filename = os.path.join(params.name, run.base_filename + ".wav")
         if os.path.isfile(recording_filename):
             print("Skipping existing run " + run.uuid)
             continue
@@ -69,9 +68,9 @@ def collect(runs: List[ExperimentRun], params: ExperimentParams):
         )
 
         time.sleep(params.recording_warmup_duration_s)
-        with open(os.path.join(params.name, base_name + ".stdout"), "wb") as stdout:
-            with open(os.path.join(params.name, base_name + ".stderr"), "wb") as stderr:
-                execute_psplay(run, stdout=stdout, stderr=stderr)
+        with open(os.path.join(params.name, run.base_filename + ".stdout"), "wb") as stdout:
+            with open(os.path.join(params.name, run.base_filename + ".stderr"), "wb") as stderr:
+                execute_psplay(run, program=psplay_program, stdout=stdout, stderr=stderr)
 
         time.sleep(params.recording_cooldown_duration_s)
         sounddevice.stop()
@@ -92,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--platform", help="Recorded tx platform name")
     parser.add_argument("-d", "--distance", type=float, help="Recorded Tx-to-Rx distance in meters", default=0.0)
     parser.add_argument("-r", "--repeat", type=int, help="Number of times to repeat the experiment", default=1)
+    parser.add_argument("-c", "--config", type=str, help="Config file to use", default="random_frames")
     parser.add_argument("--resume", action="store_true", help="Resume from an interrupted experiment")
     parser.add_argument("--extend", action="store_true", help="Extend an existing experiment")
     parser.add_argument("--device", type=int, help="Audio input device ID", default=None)
@@ -100,20 +100,23 @@ if __name__ == "__main__":
     if args.device is not None:
         sounddevice.default.device = args.device
 
+    config = importlib.import_module("." + args.config, "configs")
+
     os.makedirs(args.name, exist_ok=True)
 
     manifest = ExperimentManifest(params=ExperimentParams(experiment_run_cooldown_duration_s=0.0))
 
-    runs_new = [copy.deepcopy(EXPERIMENT_RUNS_SKELETON) for _ in range(args.repeat)]
+    runs_new = [copy.deepcopy(config.EXPERIMENT_RUNS_SKELETON) for _ in range(args.repeat)]
     runs_new: List[ExperimentRun] = list(itertools.chain(*runs_new))
     setattrs(runs_new, "distance_m", args.distance)
     setattrs(runs_new, "tx_platform", args.platform or get_platform_string())
     setattrs(runs_new, "uuid", lambda: str(uuid.uuid4()))
 
-    # Generate random payload
     for run in runs_new:
+        # Generate random payload
         if isinstance(run.tx_payload, int):
             run.tx_payload = os.urandom(run.tx_payload)
+        run.base_filename = get_base_filename(getattr(config, "EXPERIMENT_RUN_BASE_FILENAME_FORMAT", "{uuid}"), run)
 
     if not args.resume and not args.extend:
         # create a new experiment
@@ -131,4 +134,4 @@ if __name__ == "__main__":
     else:
         raise ValueError("--resume and --extend cannot be specified at the same time")
     
-    collect(manifest.runs, manifest.params)
+    collect(manifest.runs, manifest.params, getattr(config, "PSPLAY_PROGRAM", ["../psplay/build/PSPlay"]))
