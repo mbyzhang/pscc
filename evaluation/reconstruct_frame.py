@@ -7,7 +7,7 @@ from typing import List
 
 from tqdm import tqdm
 from common import ExperimentManifest, ExperimentRun, get_base_filename
-from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, MANIFEST_FILENAME
+from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT
 
 sys.path.insert(0, "../psrecv")
 
@@ -64,11 +64,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Name of the experiment", default="Untitled")
     args = parser.parse_args()
-    
-    filename = os.path.join(args.name, MANIFEST_FILENAME)
 
-    with open(filename, "r") as manifest_f:
-        manifest = ExperimentManifest.from_json(manifest_f.read())
+    manifest = ExperimentManifest.load(args.name)
 
     pbar = tqdm(manifest.runs)
     frames_total = 0
@@ -89,5 +86,4 @@ if __name__ == "__main__":
         pbar.set_description(f"{frames_received}/{frames_total}")
         # print(f"{run.uuid}: {frame}")
 
-    with open(filename, "w") as manifest_f:
-        manifest_f.write(manifest.to_json())
+    manifest.save(args.name)

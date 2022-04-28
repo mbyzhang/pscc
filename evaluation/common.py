@@ -1,9 +1,12 @@
 import base64
 import dataclasses
+import os
 
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
 from typing import List, Optional
+
+MANIFEST_FILENAME = "manifest.json"
 
 @dataclass_json
 @dataclass
@@ -24,6 +27,9 @@ class ExperimentRun:
     distance_m: float = 0.0
     uuid: str = ""
 
+    def summary(self) -> str:
+        return dataclasses.asdict(self)
+
 @dataclass_json
 @dataclass
 class ExperimentParams:
@@ -38,6 +44,20 @@ class ExperimentParams:
 class ExperimentManifest:
     runs: List[ExperimentRun] = field(default_factory=list)
     params: ExperimentParams = field(default_factory=ExperimentParams)
+
+    def get_run_by_uuid(self, uuid: str) -> ExperimentRun:
+        return next(filter(lambda run: run.uuid == uuid, self.runs))
+
+    @classmethod
+    def load(cls, name: str):
+        filename = os.path.join(name, MANIFEST_FILENAME)
+        with open(filename, "r") as f:
+            return cls.from_json(f.read())
+
+    def save(self, name: str, mode: str = "w"):
+        filename = os.path.join(name, MANIFEST_FILENAME)
+        with open(filename, mode) as f:
+            f.write(self.to_json())
 
 def get_base_filename(format: str, run: ExperimentRun):
     return format.format(

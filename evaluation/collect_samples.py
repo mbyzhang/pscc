@@ -1,7 +1,7 @@
 from typing import List
 from tqdm import tqdm
 from common import ExperimentManifest, ExperimentParams, ExperimentRun, get_base_filename
-from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, EXPERIMENT_RUNS_SKELETON, MANIFEST_FILENAME, PSPLAY_PROGRAM
+from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, EXPERIMENT_RUNS_SKELETON, PSPLAY_PROGRAM
 
 import argparse
 import os
@@ -102,9 +102,7 @@ if __name__ == "__main__":
 
     os.makedirs(args.name, exist_ok=True)
 
-    manifest = ExperimentManifest(params=ExperimentParams(experiment_run_cooldown_duration_s=0))
-
-    filename = os.path.join(args.name, MANIFEST_FILENAME)
+    manifest = ExperimentManifest(params=ExperimentParams(experiment_run_cooldown_duration_s=0.0))
 
     runs_new = [copy.deepcopy(EXPERIMENT_RUNS_SKELETON) for _ in range(args.repeat)]
     runs_new: List[ExperimentRun] = list(itertools.chain(*runs_new))
@@ -119,22 +117,17 @@ if __name__ == "__main__":
 
     if not args.resume and not args.extend:
         # create a new experiment
-        with open(filename, "x") as manifest_f:
-            manifest.params = ExperimentParams(args.name)
-            manifest.runs = runs_new
-            manifest_f.write(manifest.to_json())
+        manifest.params = ExperimentParams(args.name)
+        manifest.runs = runs_new
+        manifest.save(args.name, "x")
     elif args.resume and not args.extend:
         # resume from an interrupted experiment
-        with open(filename, "r") as manifest_f:
-            manifest = ExperimentManifest.from_json(manifest_f.read())
+        manifest = ExperimentManifest.load(args.name)
     elif args.extend and not args.resume:
         # extend an existing experiment
-        with open(filename, "r+") as manifest_f:
-            manifest = ExperimentManifest.from_json(manifest_f.read())
-            manifest.runs += runs_new
-            manifest_f.seek(0)
-            manifest_f.write(manifest.to_json())
-            manifest_f.truncate()
+        manifest = ExperimentManifest.load(args.name)
+        manifest.runs += runs_new
+        manifest.save(args.name)
     else:
         raise ValueError("--resume and --extend cannot be specified at the same time")
     

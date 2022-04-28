@@ -62,6 +62,5 @@ EXPERIMENT_RUNS_SKELETON = \
     )
 
 PSPLAY_PROGRAM = ["../psplay/build/PSPlay"]
-MANIFEST_FILENAME = "manifest.json"
 # EXPERIMENT_RUN_BASE_FILENAME_FORMAT = "{uuid}"
 EXPERIMENT_RUN_BASE_FILENAME_FORMAT = "{tx_mode}/{tx_modulation}/{tx_modulation_freqs}/{tx_baudrate}/{distance_m}m/{uuid}"
