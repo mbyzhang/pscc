@@ -59,14 +59,6 @@ def demodulate(run: ExperimentRun, base_dir: str = ".", block_size: int = 4096):
 
     return frames
 
-def get_metrics(run: ExperimentRun, frames: List[bytearray]):
-    # bit error rate (BER)
-    
-    # number of correct frames received
-    
-    # total number of frames received
-    pass
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Name of the experiment", default="Untitled")
