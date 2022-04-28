@@ -94,7 +94,11 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--repeat", type=int, help="Number of times to repeat the experiment", default=1)
     parser.add_argument("--resume", action="store_true", help="Resume from an interrupted experiment")
     parser.add_argument("--extend", action="store_true", help="Extend an existing experiment")
+    parser.add_argument("--device", type=int, help="Audio input device ID", default=None)
     args = parser.parse_args()
+
+    if args.device is not None:
+        sounddevice.default.device = args.device
 
     os.makedirs(args.name, exist_ok=True)
 
