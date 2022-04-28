@@ -69,8 +69,11 @@ if __name__ == "__main__":
 
     with open(filename, "r") as manifest_f:
         manifest = ExperimentManifest.from_json(manifest_f.read())
-    
-    for run in tqdm(manifest.runs):
+
+    pbar = tqdm(manifest.runs)
+    frames_total = 0
+    frames_received = 0
+    for run in pbar:
         frames = demodulate(run, args.name)
 
         # assume the the first frame that has the correct length is the target frame
@@ -78,8 +81,13 @@ if __name__ == "__main__":
         frame = frames[0] if len(frames) >= 1 else None
 
         run.rx_payload = frame
+        if frame is not None:
+            frames_received += 1
 
+        frames_total += 1
+
+        pbar.set_description(f"{frames_received}/{frames_total}")
         # print(f"{run.uuid}: {frame}")
-    
+
     with open(filename, "w") as manifest_f:
         manifest_f.write(manifest.to_json())
