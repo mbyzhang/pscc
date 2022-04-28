@@ -37,6 +37,8 @@ def execute_psplay(run: ExperimentRun, program: List[str] = ["../psplay/build/PS
             args += ["-r"]
     elif run.tx_mode == "chirp":
         args += ["-c"]
+    elif run.tx_mode == "alternating":
+        args += ["-a", "-n", str(run.tx_num_iters_alternating_symbols)]
     else:
         # TODO: other modes
         raise ValueError("Unsupported Tx mode: " + run.tx_mode)

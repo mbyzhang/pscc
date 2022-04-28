@@ -16,6 +16,7 @@ class ExperimentRun:
     tx_modulation: str = "fsk"
     tx_modulation_freqs: List[float] = field(default_factory=lambda: [3200.0, 3000.0]) # ignored if modulation!=fsk
     tx_mode: str = "message"
+    tx_num_iters_alternating_symbols: int = 50
     tx_payload: bytes = field(default_factory=bytes, metadata=config(
         encoder=lambda o: base64.b64encode(o).decode(),
         decoder=base64.b64decode
