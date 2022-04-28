@@ -104,13 +104,16 @@ if __name__ == "__main__":
 
     os.makedirs(args.name, exist_ok=True)
 
-    manifest = ExperimentManifest(params=ExperimentParams(experiment_run_cooldown_duration_s=0.0))
+    manifest = ExperimentManifest()
 
     runs_new = [copy.deepcopy(config.EXPERIMENT_RUNS_SKELETON) for _ in range(args.repeat)]
     runs_new: List[ExperimentRun] = list(itertools.chain(*runs_new))
     setattrs(runs_new, "distance_m", args.distance)
     setattrs(runs_new, "tx_platform", args.platform or get_platform_string())
     setattrs(runs_new, "uuid", lambda: str(uuid.uuid4()))
+
+    if hasattr(config, "EXPERIMENT_PARAMS"):
+        manifest.params = config.EXPERIMENT_PARAMS
 
     for run in runs_new:
         # Generate random payload
@@ -120,7 +123,7 @@ if __name__ == "__main__":
 
     if not args.resume and not args.extend:
         # create a new experiment
-        manifest.params = ExperimentParams(args.name)
+        manifest.params.name = args.name
         manifest.runs = runs_new
         manifest.save(args.name, "x")
     elif args.resume and not args.extend:

@@ -37,7 +37,7 @@ class ExperimentParams:
     name: str = "Untitled"
     recording_warmup_duration_s: float = 1.0
     recording_cooldown_duration_s: float = 1.0
-    experiment_run_cooldown_duration_s: float = 5.0
+    experiment_run_cooldown_duration_s: float = 0.0
     recording_fs: int = 48000
 
 @dataclass_json
