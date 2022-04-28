@@ -12,7 +12,6 @@ import platform
 import subprocess
 import sounddevice
 import soundfile
-import random
 import itertools
 import numpy as np
 
@@ -112,7 +111,7 @@ if __name__ == "__main__":
     # Generate random payload
     for run in runs_new:
         if isinstance(run.tx_payload, int):
-            run.tx_payload = random.randbytes(run.tx_payload)
+            run.tx_payload = os.urandom(run.tx_payload)
 
     if not args.resume and not args.extend:
         # create a new experiment
