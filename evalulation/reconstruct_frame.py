@@ -1,6 +1,8 @@
 import os
 import sys
 import argparse
+import importlib
+
 from typing import List
 
 from tqdm import tqdm
@@ -9,16 +11,9 @@ from config import EXPERIMENT_RUN_BASE_FILENAME_FORMAT, MANIFEST_FILENAME
 
 sys.path.insert(0, "../psrecv")
 
-from modules.transformers import Sequential
-from modules.transformers.cdr import SimpleCDR
-from modules.transformers.framing import Deframer
-from modules.transformers.demodulators import BFSKDemodulator
-from modules.io import SoundDeviceSource, SoundFileSource
+from modules.io import SoundFileSource
 
 def demodulate(run: ExperimentRun, base_dir: str = ".", block_size: int = 4096):
-    assert run.tx_modulation == "fsk"
-    assert len(run.tx_modulation_freqs) == 2
-
     filename = os.path.join(base_dir, get_base_filename(EXPERIMENT_RUN_BASE_FILENAME_FORMAT, run) + ".wav")
     source = SoundFileSource(filename, block_size=block_size)
 
@@ -29,30 +24,26 @@ def demodulate(run: ExperimentRun, base_dir: str = ".", block_size: int = 4096):
         sps = fs // run.tx_baudrate
 
         format = {
-            "message": Deframer.FormatType.STANDARD,
-            "raw": Deframer.FormatType.RAW_PAYLOAD
+            "message": "standard",
+            "raw": "payload_no_ecc_lc",
         }[run.tx_mode]
 
-        pipeline = Sequential(
-            BFSKDemodulator(
-                fs=fs,
-                f0=run.tx_modulation_freqs[0],
-                f1=run.tx_modulation_freqs[1],
-                f_delta=abs(run.tx_modulation_freqs[0] - run.tx_modulation_freqs[1]) / 2.0,
-                carrier_bandpass_ntaps=1229, # TODO: change me
-                symbol_lpf_cutoff_freq=1100,
-                symbol_lpf_ntaps=405,
-                eps=1e-6,
-            ),
-            SimpleCDR(
-                sps=sps,
-                clk_recovery_window=sps // 4,
-                clk_recovery_grad_threshold=0.03,
-                median_window_size=int(sps * 0.8)
-            ),
-            Deframer(
-                format=format
-            )
+        if run.tx_modulation == "dbpsk":
+            profile = "dbpsk"
+        elif run.tx_modulation == "fsk":
+            if len(run.tx_modulation_freqs) == 2:
+                profile = "bfsk"
+            else:
+                profile = "mfsk"
+        else:
+            raise ValueError("Unsupport modulation")
+
+        pipeline = importlib.import_module("." + profile, "profiles").get_pipeline(
+            fs=fs,
+            sps=sps,
+            carrier_freqs=run.tx_modulation_freqs,
+            carrier_f_delta=100,
+            frame_format=format,
         )
 
         for block in source.stream:
