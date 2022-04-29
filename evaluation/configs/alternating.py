@@ -11,6 +11,7 @@ EXPERIMENT_RUNS_SKELETON = cartesian_product_dataclass(ExperimentRun,
          [12630.0, 11430.0],
          [14850.0, 15680.0],
     ],
+    tx_loop_count=[50],
 )
 
 PSPLAY_PROGRAM = ["ssh", "peter-pc.local", "sudo", "pscc/psplay/build/PSPlay"]

@@ -29,6 +29,12 @@ def execute_psplay(run: ExperimentRun, program: List[str] = ["../psplay/build/PS
     # modulation frequencies
     args += ["-f", ",".join(map(str, run.tx_modulation_freqs))]
 
+    # loop count
+    args += ["-n", str(run.tx_loop_count)]
+
+    # loop delay
+    args += ["-d", str(run.tx_loop_delay)]
+
     # mode and payload
     if run.tx_mode in {"message", "raw"}:
         # args += ["-m", run.tx_payload]
@@ -38,7 +44,7 @@ def execute_psplay(run: ExperimentRun, program: List[str] = ["../psplay/build/PS
     elif run.tx_mode == "chirp":
         args += ["-c"]
     elif run.tx_mode == "alternating":
-        args += ["-a", "-n", str(run.tx_num_iters_alternating_symbols)]
+        args += ["-a"]
     else:
         # TODO: other modes
         raise ValueError("Unsupported Tx mode: " + run.tx_mode)
