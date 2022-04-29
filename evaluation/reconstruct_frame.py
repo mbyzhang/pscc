@@ -5,7 +5,8 @@ import importlib
 
 from typing import List
 
-from tqdm import tqdm
+from pqdm.processes import pqdm
+from functools import partial
 from common import ExperimentManifest, ExperimentRun, get_base_filename
 
 sys.path.insert(0, "../psrecv")
@@ -58,6 +59,21 @@ def demodulate(run: ExperimentRun, base_dir: str = ".", block_size: int = 4096):
 
     return frames
 
+def demodulate_wrapper(run: ExperimentRun, base_dir: str) -> ExperimentRun:
+    try:
+        frames = demodulate(run, base_dir)
+
+        # assume the the first frame that has the correct length is the target frame
+        frames = list(filter(lambda o: len(o) == len(run.tx_payload), frames))
+        run.rx_payload = frames[0] if len(frames) >= 1 else None
+        run.rx_ok = True
+    except Exception as e:
+        print(e)
+        run.rx_payload = None
+        run.rx_ok = False
+
+    return run
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Name of the experiment", default="Untitled")
@@ -65,23 +81,13 @@ if __name__ == "__main__":
 
     manifest = ExperimentManifest.load(args.name)
 
-    pbar = tqdm(manifest.runs)
-    frames_total = 0
-    frames_received = 0
-    for run in pbar:
-        frames = demodulate(run, args.name)
+    results = pqdm(
+        manifest.runs,
+        partial(demodulate_wrapper, base_dir=args.name),
+        n_jobs=os.cpu_count(),
+        exception_behaviour='immediate'
+    )
 
-        # assume the the first frame that has the correct length is the target frame
-        frames = list(filter(lambda o: len(o) == len(run.tx_payload), frames))
-        frame = frames[0] if len(frames) >= 1 else None
-
-        run.rx_payload = frame
-        if frame is not None:
-            frames_received += 1
-
-        frames_total += 1
-
-        pbar.set_description(f"{frames_received}/{frames_total}")
-        # print(f"{run.uuid}: {frame}")
-
+    manifest.runs = results
+    print("Saving results...")
     manifest.save(args.name)
