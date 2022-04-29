@@ -4,7 +4,7 @@ import os
 
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, config
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 MANIFEST_FILENAME = "manifest.json"
 
@@ -14,7 +14,7 @@ class ExperimentRun:
     tx_platform: str = "Unspecified Tx Platform"
     tx_baudrate: float = 100.0
     tx_modulation: str = "fsk"
-    tx_modulation_freqs: List[float] = field(default_factory=lambda: [3200.0, 3000.0]) # ignored if modulation!=fsk
+    tx_modulation_freqs: Tuple[float, ...] = (3200.0, 3000.0) # ignored if modulation!=fsk
     tx_mode: str = "message"
     tx_loop_count: int = 1
     tx_loop_delay: float = 0.5
