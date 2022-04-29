@@ -68,7 +68,7 @@ def collect(runs: List[ExperimentRun], params: ExperimentParams, psplay_program:
             print("Skipping existing run " + run.uuid)
             continue
 
-        recording = np.zeros((params.recording_fs * 300, 1))
+        recording = np.zeros((params.recording_fs * 60, 1))
         
         sounddevice.rec(
             out=recording,
