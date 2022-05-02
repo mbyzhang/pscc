@@ -27,6 +27,7 @@ class ExperimentRun:
         encoder=lambda o: o and base64.b64encode(o).decode(),
         decoder=lambda o: o and base64.b64decode(o)
     ))
+    rx_frame_count: int = 0 # number of frames with the correct length
     distance_m: float = 0.0
     base_filename: str = ""
     uuid: str = ""

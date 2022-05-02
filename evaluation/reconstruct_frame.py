@@ -66,6 +66,7 @@ def demodulate_wrapper(run: ExperimentRun, base_dir: str) -> ExperimentRun:
         # assume the the first frame that has the correct length is the target frame
         frames = list(filter(lambda o: len(o) == len(run.tx_payload), frames))
         run.rx_payload = frames[0] if len(frames) >= 1 else None
+        run.rx_frame_count = len(frames)
         run.rx_ok = True
     except Exception as e:
         print(e)
