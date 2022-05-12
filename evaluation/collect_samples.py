@@ -24,27 +24,29 @@ def execute_psplay(run: ExperimentRun, program: List[str] = ["../psplay/build/PS
     args = copy.deepcopy(program)
 
     # bitrate
-    args += ["-b", str(run.tx_baudrate)]
+    args += ["--baud-rate", str(run.tx_baudrate)]
 
     # modulation frequencies
-    args += ["-f", ",".join(map(str, run.tx_modulation_freqs))]
+    args += ["--freqs", ",".join(map(str, run.tx_modulation_freqs))]
+
+    # preamble length
+    args += ["--frame-preamble-len", "20"]
 
     # loop count
-    args += ["-n", str(run.tx_loop_count)]
+    args += ["--loop-count", str(run.tx_loop_count)]
 
     # loop delay
-    args += ["-d", str(run.tx_loop_delay)]
+    args += ["--loop-delay", str(run.tx_loop_delay)]
 
     # mode and payload
     if run.tx_mode in {"message", "raw"}:
-        # args += ["-m", run.tx_payload]
-        args += ["-s"]
+        args += ["--stdin"]
         if run.tx_mode == "raw":
-            args += ["-r"]
+            args += ["--frame-payload-raw", "--frame-ecc-level", "0"]
     elif run.tx_mode == "chirp":
-        args += ["-c"]
+        args += ["--mode-chirp"]
     elif run.tx_mode == "alternating":
-        args += ["-a"]
+        args += ["--mode-alternating"]
     else:
         # TODO: other modes
         raise ValueError("Unsupported Tx mode: " + run.tx_mode)
@@ -52,9 +54,11 @@ def execute_psplay(run: ExperimentRun, program: List[str] = ["../psplay/build/PS
     if run.tx_modulation == "fsk":
         pass
     elif run.tx_modulation == "dbpsk":
-        args += ["-p"]
+        args += ["--dbpsk"]
     else:
         raise ValueError("Unsupported Tx modulation: " + run.tx_modulation)
+    
+    args += run.tx_extra_args
 
     subprocess.run(args, check=True, input=run.tx_payload, stdout=stdout, stderr=stderr)
 
@@ -126,7 +130,23 @@ if __name__ == "__main__":
     for run in runs_new:
         # Generate random payload
         if isinstance(run.tx_payload, int):
-            run.tx_payload = os.urandom(run.tx_payload)
+            payload_len = run.tx_payload
+            payload_bits = np.random.randint(0, 2, payload_len * 2, dtype=np.int8)
+            consecutive_bits = 1
+            last_bit = -1
+            for idx, bit in enumerate(payload_bits):
+                if bit == last_bit:
+                    consecutive_bits += 1
+                if consecutive_bits == 6:
+                    bit = 1 - bit
+                    payload_bits[idx] = bit
+                    consecutive_bits = 1
+                last_bit = bit
+
+            c = np.convolve(np.where(payload_bits, 1, -1), np.ones(6), mode="valid")
+            assert np.all(np.abs(c) < 6)
+            run.tx_payload = np.packbits(payload_bits, bitorder='little').tobytes()
+
         run.base_filename = get_base_filename(getattr(config, "EXPERIMENT_RUN_BASE_FILENAME_FORMAT", "{uuid}"), run)
 
     if not args.resume and not args.extend:

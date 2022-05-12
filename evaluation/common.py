@@ -22,6 +22,7 @@ class ExperimentRun:
         encoder=lambda o: base64.b64encode(o).decode(),
         decoder=base64.b64decode
     )) # ignored if mode=chirp/audiofile/alternating
+    tx_extra_args: List[str] = field(default_factory=list)
     rx_ok: bool = False
     rx_payload: Optional[bytes] = field(default=None, metadata=config(
         encoder=lambda o: o and base64.b64encode(o).decode(),
@@ -34,6 +35,10 @@ class ExperimentRun:
 
     def summary(self) -> str:
         return dataclasses.asdict(self)
+    
+    def dump_log(self, exp_dir, log_type = "stderr") -> None:
+        with open(os.path.join(exp_dir, self.base_filename + "." + log_type), "r") as f:
+            print(f.read())
 
 @dataclass_json
 @dataclass
@@ -41,7 +46,7 @@ class ExperimentParams:
     name: str = "Untitled"
     recording_warmup_duration_s: float = 1.0
     recording_cooldown_duration_s: float = 1.0
-    experiment_run_cooldown_duration_s: float = 0.0
+    experiment_run_cooldown_duration_s: float = 5.0
     recording_fs: int = 48000
 
 @dataclass_json

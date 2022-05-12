@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import importlib
+import numpy as np
 
 from typing import List
 
@@ -11,32 +12,41 @@ from common import ExperimentManifest, ExperimentRun, get_base_filename
 
 sys.path.insert(0, "../psrecv")
 
-from modules.io import SoundFileSource
+from audioio import SoundFileSource
 
 def get_pipeline(run: ExperimentRun, fs: int):
     sps = fs // run.tx_baudrate
 
     format = {
         "message": "standard",
-        "raw": "payload_no_ecc_lc",
+        "raw": "raw_payload",
+        "alternating": "raw_payload",
     }[run.tx_mode]
 
     if run.tx_modulation == "dbpsk":
         profile = "dbpsk"
+        # f_delta = run.tx_baudrate * 4
+        f_delta = run.tx_baudrate * 2
     elif run.tx_modulation == "fsk":
         if len(run.tx_modulation_freqs) == 2:
-            profile = "bfsk"
+            parofile = "bfsk"
         else:
             profile = "mfsk"
+        
+        f_delta = np.min(np.diff(sorted(run.tx_modulation_freqs))) / 2.0 # upper bound
+        f_delta = min(f_delta, run.tx_baudrate * 1.5)
+        f_delta = max(f_delta, 100.0)
+        f_delta = 200
     else:
-        raise ValueError("Unsupport modulation")
+        raise ValueError("Unsupported modulation")
 
     pipeline = importlib.import_module("." + profile, "profiles").get_pipeline(
         fs=fs,
         sps=sps,
         carrier_freqs=run.tx_modulation_freqs,
-        carrier_f_delta=100,
+        carrier_f_delta=f_delta,
         frame_format=format,
+        frame_ecc_level=0,
     )
 
     return pipeline
