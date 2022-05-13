@@ -29,7 +29,7 @@ def get_pipeline(run: ExperimentRun, fs: int):
         f_delta = run.tx_baudrate * 2
     elif run.tx_modulation == "fsk":
         if len(run.tx_modulation_freqs) == 2:
-            parofile = "bfsk"
+            profile = "bfsk"
         else:
             profile = "mfsk"
         
